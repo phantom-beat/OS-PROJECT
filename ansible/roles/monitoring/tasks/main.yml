@@ -1,0 +1,114 @@
+---
+# Role: monitoring
+# Objetivo: instalar Docker, Prometheus, Grafana y Node Exporter
+
+- name: Instalar dependencias para Docker
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - python3-pip
+    state: present
+    update_cache: yes
+
+- name: Crear directorio para llaves APT
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Agregar clave GPG oficial de Docker
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Agregar repositorio oficial de Docker
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename | default('jammy') }} stable"
+    state: present
+    filename: docker
+
+- name: Instalar Docker Engine y Compose Plugin
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Asegurar que Docker esté iniciado y habilitado
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Agregar usuario vagrant al grupo docker
+  user:
+    name: vagrant
+    groups: docker
+    append: yes
+
+# === Directorios y configuración ===
+- name: Crear directorio de monitoreo
+  file:
+    path: /opt/monitoring
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copiar archivo de configuración de Prometheus
+  copy:
+    src: prometheus.yml
+    dest: /opt/monitoring/prometheus.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Copiar archivo docker-compose.yml
+  copy:
+    src: docker-compose.yml
+    dest: /opt/monitoring/docker-compose.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Crear carpeta de configuración de Grafana
+  file:
+    path: /opt/monitoring/grafana/provisioning/datasources
+    state: directory
+    recurse: yes
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copiar configuración del datasource de Grafana
+  copy:
+    src: grafana/provisioning/datasources/datasource.yml
+    dest: /opt/monitoring/grafana/provisioning/datasources/datasource.yml
+    owner: root
+    group: root
+    mode: "0644"
+
+# === Dependencias de Python para el módulo docker_compose ===
+- name: Instalar dependencias Python requeridas por community.docker
+  pip:
+    name:
+      - docker
+      - requests
+      - docker[ssh]
+    state: present
+  become: true
+
+- name: Levantar stack de monitoreo con Docker Compose (CLI oficial)
+  ansible.builtin.shell: |
+    docker compose -f /opt/monitoring/docker-compose.yml up -d
+  args:
+    chdir: /opt/monitoring
+  become: true

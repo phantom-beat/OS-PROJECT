@@ -1,0 +1,31 @@
+---
+# Role: common
+# Objetivo: preparar el entorno base de Kali Linux
+
+- name: Actualizar el sistema y cache de APT
+  apt:
+    update_cache: yes
+    upgrade: dist
+    force_apt_get: yes
+
+- name: Instalar herramientas esenciales
+  apt:
+    name:
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - wget
+      - gnupg
+      - unzip
+      - python3
+      - python3-pip
+      - net-tools
+      - vim
+      - git
+    state: present
+
+- name: Limpiar paquetes innecesarios
+  apt:
+    autoremove: yes
+    autoclean: yes

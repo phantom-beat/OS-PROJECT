@@ -1,0 +1,109 @@
+---
+# Role: nginx
+# Objetivo: instalar y configurar un servidor web básico para DataExplorer
+
+- name: Instalar Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Asegurar que Nginx esté habilitado y ejecutándose
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Configurar el sitio por defecto con stub_status
+  copy:
+    dest: /etc/nginx/sites-available/default
+    content: |
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          server_name _;
+          root /var/www/html;
+
+          index index.html;
+
+          location / {
+              try_files $uri $uri/ =404;
+          }
+
+          # Endpoint para métricas de tráfico (monitoreo Prometheus)
+          location /nginx_status {
+              stub_status on;
+              access_log off;
+              allow 127.0.0.1;
+              allow 192.168.56.0/24;
+              allow 172.16.0.0/12;      # Permite el acceso desde redes internas de Docker
+              deny all;
+          }
+      }
+  notify: Reiniciar Nginx
+
+- name: Crear página de bienvenida DataExplorer
+  copy:
+    dest: /var/www/html/index.html
+    content: |
+      <html>
+      <head>
+        <title>PHANTOM_BEAT & SANTHOR</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          body {
+            background-color: #0d0221;
+            color: #f0f0f0;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            overflow: hidden;
+          }
+          .container {
+            border: 3px solid #2de2e6;
+            border-radius: 15px;
+            padding: 40px 60px;
+            background: rgba(13, 2, 33, 0.8);
+            box-shadow: 0 0 25px #2de2e6, inset 0 0 25px #2de2e6;
+          }
+          h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            color: #f706cf;
+            text-transform: uppercase;
+            text-shadow:
+              0 0 5px #f706cf,
+              0 0 10px #f706cf,
+              0 0 20px #f706cf,
+              0 0 40px #2de2e6,
+              0 0 80px #2de2e6;
+          }
+          p {
+            font-size: 1.2em;
+            color: #f0f0f0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>BIENVENIDOS AL SERVER DE<br>PHANTOM_BEAT Y SANTHOR</h1>
+          <p>DataExplorer Project</p>
+        </div>
+      </body>
+      </html>
+  notify: Reiniciar Nginx
+
+- name: Asegurar que el sitio por defecto esté habilitado
+  file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+  notify: Reiniciar Nginx
