@@ -45,9 +45,10 @@ services:
     restart: unless-stopped
     ports:
       - "9113:9113"
+    # Apuntar al endpoint nginx_status del servidor web (web VM)
     command:
       - -nginx.scrape-uri
-      - http://192.168.56.99/nginx_status
+      - http://192.168.56.101/nginx_status
     networks:
       - monitoring
 

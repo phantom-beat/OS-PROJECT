@@ -1,10 +1,22 @@
 ---
-- name: Configuración completa del proyecto DataExplorer
-  hosts: all
+---
+- name: Provisionar servidor web (Nginx)
+  hosts: web
   become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
   roles:
     - common
     - nginx
+
+- name: Provisionar servidor de monitoreo (Prometheus + Grafana)
+  hosts: monitoring
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  roles:
+    - common
     - monitoring
 

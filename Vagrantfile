@@ -1,24 +1,38 @@
 Vagrant.configure("2") do |config|
-  # Box base
+  # Box base (misma para ambas máquinas)
   config.vm.box = "ubuntu/jammy64"
-  config.vm.hostname = "dataexplorer"
-
-  # Red privada (para acceso local)
-  config.vm.network "private_network", ip: "192.168.56.99"
 
   # Carpeta compartida
   config.vm.synced_folder ".", "/vagrant"
 
-  # Configuración de VirtualBox
-  config.vm.provider "virtualbox" do |vb|
-    vb.name = "DataExplorer-Ubuntu"
-    vb.memory = 4096
-    vb.cpus = 2
+  # Máquina web: Nginx
+  config.vm.define "web" do |web|
+    web.vm.hostname = "dataexplorer-web"
+    web.vm.network "private_network", ip: "192.168.56.101"
+
+    web.vm.provider "virtualbox" do |vb|
+      vb.name = "DataExplorer-Web"
+      vb.memory = 2048
+      vb.cpus = 2
+    end
   end
 
-  # Provisionamiento con Ansible Local
-  config.vm.provision "ansible_local" do |ansible|
+  # Máquina de monitoreo: Prometheus + Grafana
+  config.vm.define "monitoring" do |monitoring|
+    monitoring.vm.hostname = "dataexplorer-monitoring"
+    monitoring.vm.network "private_network", ip: "192.168.56.102"
+
+    monitoring.vm.provider "virtualbox" do |vb|
+      vb.name = "DataExplorer-Monitoring"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+  end
+
+  # Provisionamiento con Ansible desde el host (requiere Ansible instalado en la máquina host)
+  # Ejecutará ansible/playbook.yml y Vagrant generará el inventario automáticamente
+  config.vm.provision "ansible" do |ansible|
     ansible.playbook = "/vagrant/ansible/playbook.yml"
-    ansible.verbose = "v"
+    ansible.verbose = true
   end
 end
