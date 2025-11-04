@@ -32,7 +32,7 @@ Vagrant.configure("2") do |config|
   # Provisionamiento con Ansible desde el host (requiere Ansible instalado en la máquina host)
   # Ejecutará ansible/playbook.yml y Vagrant generará el inventario automáticamente
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "/vagrant/ansible/playbook.yml"
+    ansible.playbook = "ansible/playbook.yml"
     ansible.verbose = true
   end
 end
