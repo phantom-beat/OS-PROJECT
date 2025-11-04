@@ -1,5 +1,4 @@
 ---
----
 - name: Provisionar servidor web (Nginx)
   hosts: web
   become: yes
