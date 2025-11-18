@@ -1,13 +1,14 @@
 import threading
-import urllib.request
+import requests
+
+URL = "http://192.168.56.101/"
+HEADERS = {
+    "User-Agent": "SimpleLoadTester/1.0"
+}
 
 def make_request():
-    try:
-        with urllib.request.urlopen("http://192.168.56.101/", timeout=10) as response:
-            response.read()
-    except Exception as e:
-        # This will print errors if the web server is not reachable
-        print(f"Request failed: {e}")
+    response = requests.get(URL, headers=HEADERS, timeout=10)
+    response.raise_for_status()  # Lanza una excepción para respuestas de error (4xx o 5xx)
 
 threads = []
 print("Starting to send 100 requests...")

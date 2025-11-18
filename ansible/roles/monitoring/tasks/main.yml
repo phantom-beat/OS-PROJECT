@@ -106,9 +106,9 @@
     state: present
   become: true
 
-- name: Levantar stack de monitoreo con Docker Compose (CLI oficial)
-  ansible.builtin.shell: |
-    docker compose -f /opt/monitoring/docker-compose.yml up -d
-  args:
-    chdir: /opt/monitoring
+- name: Levantar stack de monitoreo con Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    files:
+      - docker-compose.yml
   become: true
